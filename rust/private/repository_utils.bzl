@@ -205,15 +205,15 @@ load("@rules_rust//rust:toolchain.bzl", "rust_toolchain")
 
 rust_toolchain(
     name = "{toolchain_name}",
-    rust_doc = "@{workspace_name}//:rustdoc",
-    rust_std = "@{workspace_name}//:rust_std-{target_triple}",
-    rustc = "@{workspace_name}//:rustc",
+    rust_doc = "//:rustdoc",
+    rust_std = "//:rust_std-{target_triple}",
+    rustc = "//:rustc",
     rustfmt = {rustfmt_label},
-    cargo = "@{workspace_name}//:cargo",
-    clippy_driver = "@{workspace_name}//:clippy_driver_bin",
+    cargo = "//:cargo",
+    clippy_driver = "//:clippy_driver_bin",
     llvm_cov = {llvm_cov_label},
     llvm_profdata = {llvm_profdata_label},
-    rustc_lib = "@{workspace_name}//:rustc_lib",
+    rustc_lib = "//:rustc_lib",
     rustc_srcs = {rustc_srcs},
     allocator_library = {allocator_library},
     binary_ext = "{binary_ext}",
@@ -265,15 +265,15 @@ def BUILD_for_rust_toolchain(
 
     rustc_srcs = "None"
     if include_rustc_srcs:
-        rustc_srcs = "\"@{workspace_name}//lib/rustlib/src:rustc_srcs\"".format(workspace_name = workspace_name)
+        rustc_srcs = "\"//lib/rustlib/src:rustc_srcs\"".format(workspace_name = workspace_name)
     rustfmt_label = "None"
     if include_rustfmt:
-        rustfmt_label = "\"@{workspace_name}//:rustfmt_bin\"".format(workspace_name = workspace_name)
+        rustfmt_label = "\"//:rustfmt_bin\"".format(workspace_name = workspace_name)
     llvm_cov_label = "None"
     llvm_profdata_label = "None"
     if include_llvm_tools:
-        llvm_cov_label = "\"@{workspace_name}//:llvm_cov_bin\"".format(workspace_name = workspace_name)
-        llvm_profdata_label = "\"@{workspace_name}//:llvm_profdata_bin\"".format(workspace_name = workspace_name)
+        llvm_cov_label = "\"//:llvm_cov_bin\"".format(workspace_name = workspace_name)
+        llvm_profdata_label = "\"//:llvm_profdata_bin\"".format(workspace_name = workspace_name)
     allocator_library_label = "None"
     if allocator_library:
         allocator_library_label = "\"{allocator_library}\"".format(allocator_library = allocator_library)
