@@ -24,6 +24,7 @@ load(
     "load_rustc_dev_nightly",
     "load_rustfmt",
     "select_rust_version",
+    "toolchain_repository_hub",
     _load_arbitrary_tool = "load_arbitrary_tool",
 )
 
@@ -180,6 +181,12 @@ def rust_register_toolchains(
     if rust_analyzer_version.startswith(("beta", "nightly")):
         rust_analyzer_version, _, rust_analyzer_iso_date = rustfmt_version.partition("/")
 
+    toolchain_names = []
+    toolchain_labels = {}
+    toolchain_types = {}
+    exec_compatible_with_by_toolchain = {}
+    target_compatible_with_by_toolchain = {}
+
     maybe(
         rust_analyzer_toolchain_repository,
         name = rust_analyzer_repo_name,
@@ -188,6 +195,14 @@ def rust_register_toolchains(
         sha256s = sha256s,
         iso_date = rust_analyzer_iso_date,
     )
+
+    toolchain_names.append(rust_analyzer_repo_name)
+    toolchain_labels[rust_analyzer_repo_name] = "@{}_srcs//:rust_analyzer_toolchain".format(
+        rust_analyzer_repo_name,
+    )
+    exec_compatible_with_by_toolchain[rust_analyzer_repo_name] = []
+    target_compatible_with_by_toolchain[rust_analyzer_repo_name] = []
+    toolchain_types[rust_analyzer_repo_name] = "@rules_rust//rust/rust_analyzer:toolchain_type"
 
     if register_toolchains:
         native.register_toolchains("@{}//:toolchain".format(
@@ -233,6 +248,22 @@ def rust_register_toolchains(
             native.register_toolchains("@{}//:toolchain".format(
                 rustfmt_repo_name,
             ))
+
+        for toolchain in get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
+            toolchain_names.append(toolchain.name)
+            toolchain_labels[toolchain.name] = "@{}//:{}".format(toolchain.name + "_tools", "rust_toolchain")
+            exec_compatible_with_by_toolchain[toolchain.name] = triple_to_constraint_set(exec_triple)
+            target_compatible_with_by_toolchain[toolchain.name] = triple_to_constraint_set(toolchain.target_triple)
+            toolchain_types[toolchain.name] = "@rules_rust//rust:toolchain"
+
+    toolchain_repository_hub(
+        name = "rust_toolchains",
+        toolchain_names = toolchain_names,
+        toolchain_labels = toolchain_labels,
+        toolchain_types = toolchain_types,
+        exec_compatible_with = exec_compatible_with_by_toolchain,
+        target_compatible_with = target_compatible_with_by_toolchain,
+    )
 
 # buildifier: disable=unnamed-macro
 def rust_repositories(**kwargs):
@@ -317,7 +348,6 @@ def _rust_toolchain_tools_repository_impl(ctx):
         allocator_library = ctx.attr.allocator_library,
         target_triple = target_triple,
         stdlib_linkflags = stdlib_linkflags,
-        workspace_name = ctx.attr.name,
         default_edition = ctx.attr.edition,
         include_rustfmt = not (not ctx.attr.rustfmt_version),
         include_llvm_tools = include_llvm_tools,
@@ -475,9 +505,6 @@ def rust_toolchain_repository(
         urls (list, optional): A list of mirror urls containing the tools from the Rust-lang static file server. These must contain the '{}' used to substitute the tool being fetched (using .format). Defaults to ['https://static.rust-lang.org/dist/{}.tar.gz']
         auth (dict): Auth object compatible with repository_ctx.download to use when downloading files.
             See [repository_ctx.download](https://docs.bazel.build/versions/main/skylark/lib/repository_ctx.html#download) for more details.
-
-    Returns:
-        str: The name of the registerable toolchain created by this rule.
     """
 
     if rustfmt_version in ("nightly", "beta"):
@@ -517,10 +544,6 @@ def rust_toolchain_repository(
         toolchain_type = "@rules_rust//rust:toolchain",
         exec_compatible_with = exec_compatible_with,
         target_compatible_with = target_compatible_with,
-    )
-
-    return "@{name}//:toolchain".format(
-        name = name,
     )
 
 def _rust_analyzer_toolchain_tools_repository_impl(repository_ctx):
@@ -783,6 +806,40 @@ rust_toolchain_set_repository = repository_rule(
     implementation = _rust_toolchain_set_repository_impl,
 )
 
+def get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
+    toolchain_repos = []
+
+    for target_triple in [exec_triple] + extra_target_triples:
+        # Parse all provided versions while checking for duplicates
+        channels = {}
+        for version in versions:
+            if version.startswith(("beta", "nightly")):
+                channel, _, date = version.partition("/")
+                ver = channel
+            else:
+                channel = "stable"
+                date = iso_date
+                ver = version
+
+            if channel in channels:
+                fail("Duplicate {} channels provided for {}: {}".format(channel, name, versions))
+
+            channels.update({channel: struct(
+                name = channel,
+                iso_date = date,
+                version = ver,
+            )})
+
+        # Define toolchains for each requested version
+        for channel in channels.values():
+            toolchain_repos.append(struct(
+                name = "{}__{}__{}".format(name, target_triple, channel.name),
+                target_triple = target_triple,
+                channel = channel,
+            ))
+
+    return toolchain_repos
+
 def rust_repository_set(
         name,
         exec_triple,
@@ -847,46 +904,25 @@ def rust_repository_set(
         versions = [version]
 
     all_toolchain_names = []
-    for target_triple in [exec_triple] + extra_target_triples:
-        # Parse all provided versions while checking for duplicates
-        channels = {}
-        for version in versions:
-            if version.startswith(("beta", "nightly")):
-                channel, _, date = version.partition("/")
-                ver = channel
-            else:
-                channel = "stable"
-                date = iso_date
-                ver = version
+    for toolchain in get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
+        rust_toolchain_repository(
+            name = toolchain.name,
+            allocator_library = allocator_library,
+            auth = auth,
+            channel = toolchain.channel.name,
+            dev_components = dev_components,
+            edition = edition,
+            exec_triple = exec_triple,
+            target_settings = target_settings,
+            iso_date = toolchain.channel.iso_date,
+            rustfmt_version = rustfmt_version,
+            sha256s = sha256s,
+            target_triple = toolchain.target_triple,
+            urls = urls,
+            version = toolchain.channel.version,
+        )
 
-            if channel in channels:
-                fail("Duplicate {} channels provided for {}: {}".format(channel, name, versions))
-
-            channels.update({channel: struct(
-                iso_date = date,
-                version = ver,
-            )})
-
-        # Define toolchains for each requested version
-        for channel, info in channels.items():
-            toolchain_name = "{}__{}__{}".format(name, target_triple, channel)
-
-            all_toolchain_names.append(rust_toolchain_repository(
-                name = toolchain_name,
-                allocator_library = allocator_library,
-                auth = auth,
-                channel = channel,
-                dev_components = dev_components,
-                edition = edition,
-                exec_triple = exec_triple,
-                target_settings = target_settings,
-                iso_date = info.iso_date,
-                rustfmt_version = rustfmt_version,
-                sha256s = sha256s,
-                target_triple = target_triple,
-                urls = urls,
-                version = info.version,
-            ))
+        all_toolchain_names.append("@{name}//:toolchain".format(name = toolchain.name))
 
     # This repository exists to allow `rust_repository_set` to work with the `maybe` wrapper.
     rust_toolchain_set_repository(
