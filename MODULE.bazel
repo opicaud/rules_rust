@@ -1,0 +1,23 @@
+module(
+    name = "rules_rust",
+    version = "0.19.0",
+)
+
+bazel_dep(name = "platforms", version = "0.0.5")
+bazel_dep(name = "rules_cc", version = "0.0.1")
+bazel_dep(name = "bazel_skylib", version = "1.2.0")
+bazel_dep(name = "apple_support", version = "0.13.0")
+
+# Load tinyjson without using the process wrapper
+raw_cargo = use_extension("//:extensions.bzl", "raw_cargo")
+
+raw_cargo.crate(
+    name = "tinyjson",
+    sha256 = "1a8304da9f9370f6a6f9020b7903b044aa9ce3470f300a1fba5bc77c78145a16",
+    version = "2.3.0",
+)
+
+use_repo(
+    raw_cargo,
+    rules_rust_tinyjson = "raw_cargo_tinyjson_2_3_0",
+)
