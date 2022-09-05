@@ -1,3 +1,5 @@
+"Module extensions for using rules_rust with bzlmod"
+
 load("//rust:repositories.bzl", "rust_register_toolchains")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
