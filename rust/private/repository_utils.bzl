@@ -229,7 +229,6 @@ rust_toolchain(
 """
 
 def BUILD_for_rust_toolchain(
-        workspace_name,
         name,
         exec_triple,
         target_triple,
@@ -242,7 +241,6 @@ def BUILD_for_rust_toolchain(
     """Emits a toolchain declaration to match an existing compiler and stdlib.
 
     Args:
-        workspace_name (str): The name of the workspace that this toolchain resides in
         name (str): The name of the toolchain declaration
         exec_triple (str): The rust-style target that this compiler runs on
         target_triple (str): The rust-style target triple of the tool
@@ -265,22 +263,21 @@ def BUILD_for_rust_toolchain(
 
     rustc_srcs = "None"
     if include_rustc_srcs:
-        rustc_srcs = "\"//lib/rustlib/src:rustc_srcs\"".format(workspace_name = workspace_name)
+        rustc_srcs = "\"//lib/rustlib/src:rustc_srcs\""
     rustfmt_label = "None"
     if include_rustfmt:
-        rustfmt_label = "\"//:rustfmt_bin\"".format(workspace_name = workspace_name)
+        rustfmt_label = "\"//:rustfmt_bin\""
     llvm_cov_label = "None"
     llvm_profdata_label = "None"
     if include_llvm_tools:
-        llvm_cov_label = "\"//:llvm_cov_bin\"".format(workspace_name = workspace_name)
-        llvm_profdata_label = "\"//:llvm_profdata_bin\"".format(workspace_name = workspace_name)
+        llvm_cov_label = "\"//:llvm_cov_bin\""
+        llvm_profdata_label = "\"//:llvm_profdata_bin\""
     allocator_library_label = "None"
     if allocator_library:
         allocator_library_label = "\"{allocator_library}\"".format(allocator_library = allocator_library)
 
     return _build_file_for_rust_toolchain_template.format(
         toolchain_name = name,
-        workspace_name = workspace_name,
         binary_ext = system_to_binary_ext(system),
         staticlib_ext = system_to_staticlib_ext(system),
         dylib_ext = system_to_dylib_ext(system),

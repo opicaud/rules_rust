@@ -225,7 +225,6 @@ def _rust_toolchain_tools_repository_impl(ctx):
         allocator_library = ctx.attr.allocator_library,
         target_triple = ctx.attr.target_triple,
         stdlib_linkflags = stdlib_linkflags,
-        workspace_name = ctx.attr.name,
         default_edition = ctx.attr.edition,
         include_rustfmt = not (not ctx.attr.rustfmt_version),
         include_llvm_tools = include_llvm_tools,
