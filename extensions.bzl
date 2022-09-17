@@ -4,9 +4,9 @@ load("//rust:repositories.bzl", "rust_register_toolchains", "get_toolchain_repos
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def _toolchains_impl(ctx):
-    for mod in ctx.modules:
-        for toolchain in mod.tags.toolchain:
-            rust_register_toolchains(edition = toolchain.edition, register_toolchains = False)
+    mod = ctx.modules[0]
+    for toolchain in mod.tags.toolchain:
+        rust_register_toolchains(edition = toolchain.edition, register_toolchains = False)
     toolchain_repos = []
     for exec_triple, name in DEFAULT_TOOLCHAIN_TRIPLES.items():
         toolchain_repos += get_toolchain_repositories(name = name, exec_triple = exec_triple, extra_target_triples = [])
