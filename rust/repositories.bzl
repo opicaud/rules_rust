@@ -388,9 +388,6 @@ def rust_toolchain_repository(
         urls (list, optional): A list of mirror urls containing the tools from the Rust-lang static file server. These must contain the '{}' used to substitute the tool being fetched (using .format). Defaults to ['https://static.rust-lang.org/dist/{}.tar.gz']
         auth (dict): Auth object compatible with repository_ctx.download to use when downloading files.
             See [repository_ctx.download](https://docs.bazel.build/versions/main/skylark/lib/repository_ctx.html#download) for more details.
-
-    Returns:
-        str: The name of the registerable toolchain created by this rule.
     """
 
     if exec_compatible_with == None:
@@ -421,10 +418,6 @@ def rust_toolchain_repository(
         toolchain_type = "@rules_rust//rust:toolchain",
         exec_compatible_with = exec_compatible_with,
         target_compatible_with = target_compatible_with,
-    )
-
-    return "@{name}//:toolchain".format(
-        name = name,
     )
 
 def _rust_analyzer_toolchain_srcs_repository_impl(repository_ctx):
@@ -536,6 +529,9 @@ rust_toolchain_set_repository = repository_rule(
     implementation = _rust_toolchain_set_repository_impl,
 )
 
+def get_toolchain_repositories(name, exec_triple, extra_target_triples):
+    return [struct(name = "{}__{}".format(name, target_triple), target_triple = target_triple) for target_triple in [exec_triple] + extra_target_triples]
+
 def rust_repository_set(
         name,
         version,
@@ -580,14 +576,13 @@ def rust_repository_set(
     """
 
     all_toolchain_names = []
-    for target_triple in [exec_triple] + extra_target_triples:
-        toolchain_name = "{}__{}".format(name, target_triple)
-        all_toolchain_names.append(rust_toolchain_repository(
-            name = toolchain_name,
+    for toolchain in get_toolchain_repositories(name, exec_triple, extra_target_triples):
+        rust_toolchain_repository(
+            name = toolchain.name,
             exec_triple = exec_triple,
             include_rustc_srcs = include_rustc_srcs,
             allocator_library = allocator_library,
-            target_triple = target_triple,
+            target_triple = toolchain.target_triple,
             iso_date = iso_date,
             version = version,
             rustfmt_version = rustfmt_version,
@@ -596,7 +591,9 @@ def rust_repository_set(
             sha256s = sha256s,
             urls = urls,
             auth = auth,
-        ))
+        )
+
+        all_toolchain_names.append("@{name}//:toolchain".format(name = name))
 
     # This repository exists to allow `rust_repository_set` to work with the `maybe` wrapper.
     rust_toolchain_set_repository(
