@@ -1,29 +1,18 @@
 "Module extensions for using rules_rust with bzlmod"
 
-load("//rust:repositories.bzl", "rust_register_toolchains", "get_toolchain_repositories", "DEFAULT_TOOLCHAIN_TRIPLES")
+load("//rust:repositories.bzl", "rust_register_toolchains")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def _toolchains_impl(ctx):
     mod = ctx.modules[0]
     for toolchain in mod.tags.toolchain:
         rust_register_toolchains(edition = toolchain.edition, register_toolchains = False)
-    toolchain_repos = []
-    for exec_triple, name in DEFAULT_TOOLCHAIN_TRIPLES.items():
-        toolchain_repos += get_toolchain_repositories(name = name, exec_triple = exec_triple, extra_target_triples = [])
-    rust_toolchains_repo(name="rust_toolchains", repos=[tr.name for tr in toolchain_repos])
 
 toolchains_toolchain = tag_class(attrs = {"edition": attr.string()})
 toolchains = module_extension(
     implementation = _toolchains_impl,
     tag_classes = {"toolchain": toolchains_toolchain},
 )
-
-
-def _rust_toolchains_repo_impl(ctx):
-  ctx.file("WORKSPACE")
-  ctx.file("BUILD", "\n".join(["alias(name='%s', actual='@%s//:toolchain', visibility = [\"//visibility:public\"])" % (repo,repo) for repo in ctx.attr.repos]))
-rust_toolchains_repo = repository_rule(_rust_toolchains_repo_impl, attrs={"repos": attr.string_list()})
-
 
 def _create_build_file_content(name):
     return """

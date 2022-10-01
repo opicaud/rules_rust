@@ -305,18 +305,18 @@ toolchain(
 """
 
 def BUILD_for_toolchain(
-        name,
-        toolchain,
+        toolchain_names,
+        toolchain_labels,
         toolchain_type,
         target_compatible_with,
         exec_compatible_with):
-    return _build_file_for_toolchain_template.format(
-        name = name,
-        exec_constraint_sets_serialized = exec_compatible_with,
-        target_constraint_sets_serialized = target_compatible_with,
-        toolchain = toolchain,
+    return "\n".join([_build_file_for_toolchain_template.format(
+        name = toolchain_name,
+        exec_constraint_sets_serialized = json.encode(exec_compatible_with[toolchain_name]),
+        target_constraint_sets_serialized = json.encode(target_compatible_with[toolchain_name]),
+        toolchain = toolchain_labels[toolchain_name],
         toolchain_type = toolchain_type,
-    )
+    ) for toolchain_name in toolchain_names])
 
 def load_rustfmt(ctx):
     """Loads a rustfmt binary and yields corresponding BUILD for it

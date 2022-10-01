@@ -159,6 +159,11 @@ def rust_register_toolchains(
             rust_analyzer_repo_name,
         ))
 
+    toolchain_names = []
+    toolchain_labels = {}
+    exec_compatible_with_by_toolchain = {}
+    target_compatible_with_by_toolchain = {}
+
     for exec_triple, name in DEFAULT_TOOLCHAIN_TRIPLES.items():
         maybe(
             rust_repository_set,
@@ -176,6 +181,22 @@ def rust_register_toolchains(
             urls = urls,
             version = version,
         )
+
+        for toolchain in get_toolchain_repositories(name, exec_triple, extra_target_triples):
+            toolchain_names.append(toolchain.name)
+            toolchain_labels[toolchain.name] = "@{}//:{}".format(toolchain.name + "_tools", "rust_toolchain")
+            exec_compatible_with_by_toolchain[toolchain.name] = triple_to_constraint_set(exec_triple)
+            target_compatible_with_by_toolchain[toolchain.name] = triple_to_constraint_set(toolchain.target_triple)
+
+
+    toolchain_repository_proxy(
+        name = "rust_toolchains",
+        toolchain_names = toolchain_names,
+        toolchain_labels = toolchain_labels,
+        toolchain_type = "@rules_rust//rust:toolchain",
+        exec_compatible_with = exec_compatible_with_by_toolchain,
+        target_compatible_with = target_compatible_with_by_toolchain,
+    )
 
 # buildifier: disable=unnamed-macro
 def rust_repositories(**kwargs):
@@ -312,11 +333,11 @@ def _toolchain_repository_proxy_impl(repository_ctx):
     ))
 
     repository_ctx.file("BUILD.bazel", BUILD_for_toolchain(
-        name = "toolchain",
-        toolchain = repository_ctx.attr.toolchain,
+        toolchain_names = repository_ctx.attr.toolchain_names,
+        toolchain_labels = repository_ctx.attr.toolchain_labels,
         toolchain_type = repository_ctx.attr.toolchain_type,
-        target_compatible_with = json.encode(repository_ctx.attr.target_compatible_with),
-        exec_compatible_with = json.encode(repository_ctx.attr.exec_compatible_with),
+        target_compatible_with = repository_ctx.attr.target_compatible_with,
+        exec_compatible_with =repository_ctx.attr.exec_compatible_with,
     ))
 
 toolchain_repository_proxy = repository_rule(
@@ -325,13 +346,16 @@ toolchain_repository_proxy = repository_rule(
         "rust_toolchain_repository."
     ),
     attrs = {
-        "exec_compatible_with": attr.string_list(
-            doc = "A list of constraints for the execution platform for this toolchain.",
+        "toolchain_names": attr.string_list(mandatory = True),
+        "exec_compatible_with": attr.string_list_dict(
+            doc = "A list of constraints for the execution platform for this toolchain, keyed by toolchain name.",
+            mandatory = True,
         ),
-        "target_compatible_with": attr.string_list(
-            doc = "A list of constraints for the target platform for this toolchain.",
+        "target_compatible_with": attr.string_list_dict(
+            doc = "A list of constraints for the target platform for this toolchain, keyed by toolchain name.",
+            mandatory = True,
         ),
-        "toolchain": attr.string(
+        "toolchain_labels": attr.string_dict(
             doc = "The name of the toolchain implementation target.",
             mandatory = True,
         ),
@@ -412,14 +436,6 @@ def rust_toolchain_repository(
         auth = auth,
     )
 
-    toolchain_repository_proxy(
-        name = name,
-        toolchain = "@{}//:{}".format(name + "_tools", "rust_toolchain"),
-        toolchain_type = "@rules_rust//rust:toolchain",
-        exec_compatible_with = exec_compatible_with,
-        target_compatible_with = target_compatible_with,
-    )
-
 def _rust_analyzer_toolchain_srcs_repository_impl(repository_ctx):
     load_rust_src(repository_ctx)
 
@@ -493,13 +509,14 @@ def rust_analyzer_toolchain_repository(
         auth = auth,
     )
 
-    toolchain_repository_proxy(
-        name = name,
-        toolchain = "@{}//:{}".format(name + "_srcs", "rust_analyzer_toolchain"),
-        toolchain_type = "@rules_rust//rust/rust_analyzer:toolchain_type",
-        exec_compatible_with = exec_compatible_with,
-        target_compatible_with = target_compatible_with,
-    )
+    # TODO: Implement this
+    # toolchain_repository_proxy(
+    #     name = name,
+    #     toolchain = "@{}//:{}".format(name + "_srcs", "rust_analyzer_toolchain"),
+    #     toolchain_type = "@rules_rust//rust/rust_analyzer:toolchain_type",
+    #     exec_compatible_with = exec_compatible_with,
+    #     target_compatible_with = target_compatible_with,
+    # )
 
     return "@{}//:toolchain".format(
         name,
