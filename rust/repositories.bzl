@@ -23,6 +23,7 @@ load(
     "load_rustfmt",
     "should_include_rustc_srcs",
     _load_arbitrary_tool = "load_arbitrary_tool",
+    "toolchain_repository_hub",
 )
 
 # Reexport `load_arbitrary_tool` as it's currently in use in https://github.com/google/cargo-raze
@@ -145,6 +146,12 @@ def rust_register_toolchains(
             iso_date,
         )
 
+    toolchain_names = []
+    toolchain_labels = {}
+    toolchain_types = {}
+    exec_compatible_with_by_toolchain = {}
+    target_compatible_with_by_toolchain = {}
+
     maybe(
         rust_analyzer_toolchain_repository,
         name = rust_analyzer_repo_name,
@@ -154,15 +161,19 @@ def rust_register_toolchains(
         iso_date = iso_date,
     )
 
+    toolchain_names.append(rust_analyzer_repo_name)
+    toolchain_labels[rust_analyzer_repo_name] = "@{}_srcs//:rust_analyzer_toolchain".format(
+        rust_analyzer_repo_name,
+    )
+    exec_compatible_with_by_toolchain[rust_analyzer_repo_name] = []
+    target_compatible_with_by_toolchain[rust_analyzer_repo_name] = []
+    toolchain_types[rust_analyzer_repo_name] = "@rules_rust//rust/rust_analyzer:toolchain_type"
+
+
     if register_toolchains:
         native.register_toolchains("@{}//:toolchain".format(
             rust_analyzer_repo_name,
         ))
-
-    toolchain_names = []
-    toolchain_labels = {}
-    exec_compatible_with_by_toolchain = {}
-    target_compatible_with_by_toolchain = {}
 
     for exec_triple, name in DEFAULT_TOOLCHAIN_TRIPLES.items():
         maybe(
@@ -187,13 +198,13 @@ def rust_register_toolchains(
             toolchain_labels[toolchain.name] = "@{}//:{}".format(toolchain.name + "_tools", "rust_toolchain")
             exec_compatible_with_by_toolchain[toolchain.name] = triple_to_constraint_set(exec_triple)
             target_compatible_with_by_toolchain[toolchain.name] = triple_to_constraint_set(toolchain.target_triple)
+            toolchain_types[toolchain.name] = "@rules_rust//rust:toolchain"
 
-
-    toolchain_repository_proxy(
+    toolchain_repository_hub(
         name = "rust_toolchains",
         toolchain_names = toolchain_names,
         toolchain_labels = toolchain_labels,
-        toolchain_type = "@rules_rust//rust:toolchain",
+        toolchain_types = toolchain_types,
         exec_compatible_with = exec_compatible_with_by_toolchain,
         target_compatible_with = target_compatible_with_by_toolchain,
     )
@@ -333,11 +344,11 @@ def _toolchain_repository_proxy_impl(repository_ctx):
     ))
 
     repository_ctx.file("BUILD.bazel", BUILD_for_toolchain(
-        toolchain_names = repository_ctx.attr.toolchain_names,
-        toolchain_labels = repository_ctx.attr.toolchain_labels,
+        name = "toolchain",
+        toolchain = repository_ctx.attr.toolchain,
         toolchain_type = repository_ctx.attr.toolchain_type,
-        target_compatible_with = repository_ctx.attr.target_compatible_with,
-        exec_compatible_with =repository_ctx.attr.exec_compatible_with,
+        target_compatible_with = json.encode(repository_ctx.attr.target_compatible_with),
+        exec_compatible_with = json.encode(repository_ctx.attr.exec_compatible_with),
     ))
 
 toolchain_repository_proxy = repository_rule(
@@ -346,16 +357,13 @@ toolchain_repository_proxy = repository_rule(
         "rust_toolchain_repository."
     ),
     attrs = {
-        "toolchain_names": attr.string_list(mandatory = True),
-        "exec_compatible_with": attr.string_list_dict(
-            doc = "A list of constraints for the execution platform for this toolchain, keyed by toolchain name.",
-            mandatory = True,
+        "exec_compatible_with": attr.string_list(
+            doc = "A list of constraints for the execution platform for this toolchain.",
         ),
-        "target_compatible_with": attr.string_list_dict(
-            doc = "A list of constraints for the target platform for this toolchain, keyed by toolchain name.",
-            mandatory = True,
+        "target_compatible_with": attr.string_list(
+            doc = "A list of constraints for the target platform for this toolchain.",
         ),
-        "toolchain_labels": attr.string_dict(
+        "toolchain": attr.string(
             doc = "The name of the toolchain implementation target.",
             mandatory = True,
         ),
@@ -436,6 +444,14 @@ def rust_toolchain_repository(
         auth = auth,
     )
 
+    toolchain_repository_proxy(
+        name = name,
+        toolchain = "@{}//:{}".format(name + "_tools", "rust_toolchain"),
+        toolchain_type = "@rules_rust//rust:toolchain",
+        exec_compatible_with = exec_compatible_with,
+        target_compatible_with = target_compatible_with,
+    )
+
 def _rust_analyzer_toolchain_srcs_repository_impl(repository_ctx):
     load_rust_src(repository_ctx)
 
@@ -509,14 +525,13 @@ def rust_analyzer_toolchain_repository(
         auth = auth,
     )
 
-    # TODO: Implement this
-    # toolchain_repository_proxy(
-    #     name = name,
-    #     toolchain = "@{}//:{}".format(name + "_srcs", "rust_analyzer_toolchain"),
-    #     toolchain_type = "@rules_rust//rust/rust_analyzer:toolchain_type",
-    #     exec_compatible_with = exec_compatible_with,
-    #     target_compatible_with = target_compatible_with,
-    # )
+    toolchain_repository_proxy(
+        name = name,
+        toolchain = "@{}//:{}".format(name + "_srcs", "rust_analyzer_toolchain"),
+        toolchain_type = "@rules_rust//rust/rust_analyzer:toolchain_type",
+        exec_compatible_with = exec_compatible_with,
+        target_compatible_with = target_compatible_with,
+    )
 
     return "@{}//:toolchain".format(
         name,
@@ -610,7 +625,7 @@ def rust_repository_set(
             auth = auth,
         )
 
-        all_toolchain_names.append("@{name}//:toolchain".format(name = name))
+        all_toolchain_names.append("@{name}//:toolchain".format(name = toolchain.name))
 
     # This repository exists to allow `rust_repository_set` to work with the `maybe` wrapper.
     rust_toolchain_set_repository(

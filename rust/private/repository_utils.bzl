@@ -305,18 +305,18 @@ toolchain(
 """
 
 def BUILD_for_toolchain(
-        toolchain_names,
-        toolchain_labels,
+        name,
+        toolchain,
         toolchain_type,
         target_compatible_with,
         exec_compatible_with):
-    return "\n".join([_build_file_for_toolchain_template.format(
-        name = toolchain_name,
-        exec_constraint_sets_serialized = json.encode(exec_compatible_with[toolchain_name]),
-        target_constraint_sets_serialized = json.encode(target_compatible_with[toolchain_name]),
-        toolchain = toolchain_labels[toolchain_name],
+    return _build_file_for_toolchain_template.format(
+        name = name,
+        exec_constraint_sets_serialized = exec_compatible_with,
+        target_constraint_sets_serialized = target_compatible_with,
+        toolchain = toolchain,
         toolchain_type = toolchain_type,
-    ) for toolchain_name in toolchain_names])
+    )
 
 def load_rustfmt(ctx):
     """Loads a rustfmt binary and yields corresponding BUILD for it
@@ -652,3 +652,68 @@ def _get_tool_extension(ctx):
         return ".tar.xz"
     else:
         return ""
+
+_build_file_for_toolchain_hub_template = """\
+toolchain(
+    name = "{name}",
+    exec_compatible_with = {exec_constraint_sets_serialized},
+    target_compatible_with = {target_constraint_sets_serialized},
+    toolchain = "{toolchain}",
+    toolchain_type = "{toolchain_type}",
+    visibility = ["//visibility:public"],
+)
+"""
+
+def BUILD_for_toolchain_hub(
+        toolchain_names,
+        toolchain_labels,
+        toolchain_types,
+        target_compatible_with,
+        exec_compatible_with):
+    return "\n".join([_build_file_for_toolchain_hub_template.format(
+        name = toolchain_name,
+        exec_constraint_sets_serialized = json.encode(exec_compatible_with[toolchain_name]),
+        target_constraint_sets_serialized = json.encode(target_compatible_with[toolchain_name]),
+        toolchain = toolchain_labels[toolchain_name],
+        toolchain_type = toolchain_types[toolchain_name],
+    ) for toolchain_name in toolchain_names])
+
+def _toolchain_repository_hub_impl(repository_ctx):
+    repository_ctx.file("WORKSPACE.bazel", """workspace(name = "{}")""".format(
+        repository_ctx.name,
+    ))
+
+    repository_ctx.file("BUILD.bazel", BUILD_for_toolchain_hub(
+        toolchain_names = repository_ctx.attr.toolchain_names,
+        toolchain_labels = repository_ctx.attr.toolchain_labels,
+        toolchain_types = repository_ctx.attr.toolchain_types,
+        target_compatible_with = repository_ctx.attr.target_compatible_with,
+        exec_compatible_with =repository_ctx.attr.exec_compatible_with,
+    ))
+
+toolchain_repository_hub = repository_rule(
+    doc = (
+        "Generates a toolchain-bearing repository that declares a set of other toolchains from other " +
+        "repositories. This exists to allow registering a set of toolchains in one go with the `:all` target."
+    ),
+    attrs = {
+        "toolchain_names": attr.string_list(mandatory = True),
+        "exec_compatible_with": attr.string_list_dict(
+            doc = "A list of constraints for the execution platform for this toolchain, keyed by toolchain name.",
+            mandatory = True,
+        ),
+        "target_compatible_with": attr.string_list_dict(
+            doc = "A list of constraints for the target platform for this toolchain, keyed by toolchain name.",
+            mandatory = True,
+        ),
+        "toolchain_labels": attr.string_dict(
+            doc = "The name of the toolchain implementation target, keyed by toolchain name.",
+            mandatory = True,
+        ),
+        "toolchain_types": attr.string_dict(
+            doc = "The toolchain type of the toolchain to declare, keyed by toolchain name.",
+            mandatory = True,
+        ),
+    },
+    implementation = _toolchain_repository_hub_impl,
+)
