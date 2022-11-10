@@ -49,6 +49,7 @@ load(
     _extra_rustc_flags = "extra_rustc_flags",
     _is_proc_macro_dep = "is_proc_macro_dep",
     _is_proc_macro_dep_enabled = "is_proc_macro_dep_enabled",
+    _output_diagnostics = "output_diagnostics",
     _per_crate_rustc_flag = "per_crate_rustc_flag",
 )
 load(
@@ -103,6 +104,9 @@ rust_clippy = _rust_clippy
 
 capture_clippy_output = _capture_clippy_output
 # See @rules_rust//rust/private:clippy.bzl for a complete description.
+
+output_diagnostics = _output_diagnostics
+# See @rules_rust//rust/private:rustc.bzl for a complete description.
 
 error_format = _error_format
 # See @rules_rust//rust/private:rustc.bzl for a complete description.
