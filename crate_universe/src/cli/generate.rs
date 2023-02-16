@@ -1,5 +1,6 @@
 //! The cli entrypoint for the `generate` subcommand
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -9,7 +10,7 @@ use clap::Parser;
 use crate::config::Config;
 use crate::context::Context;
 use crate::lockfile::{lock_context, write_lockfile};
-use crate::metadata::load_metadata;
+use crate::metadata::{load_metadata, SourceAnnotation};
 use crate::metadata::Annotations;
 use crate::rendering::{write_outputs, Renderer};
 use crate::splicing::SplicingManifest;
@@ -110,6 +111,26 @@ pub fn generate(opt: GenerateOptions) -> Result<()> {
 
     // Generate renderable contexts for earch package
     let context = Context::new(annotations)?;
+
+    // for (id, c) in context.crates.into_iter() {
+    //     if let Some(repo) = c.repository {
+    //         // TODO: name correctly.
+    //         let mut extra_fields: Vec<(String, String)> = [
+    //             ("name".to_string(), format!("{}_{}", c.name, c.version))
+    //         ];
+    //         match repo {
+    //             SourceAnnotation::Http { .. } => {
+    //                 extra_fields.push(("type", "tar.gz".to_string()));
+    //                 extra_fields.push(("strip_prefix", format!("{}-{}", c.name, c.version)));
+    //             },
+    //             SourceAnnotation::Git { .. } => {
+    //             }
+    //         }
+    //         CrateRepoRule{
+    //             name:
+    //         }
+    //     }
+    // }
 
     // Render build files
     let outputs = Renderer::new(render_config).render(&context)?;

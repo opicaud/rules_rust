@@ -6,7 +6,11 @@ module(
 bazel_dep(name = "platforms", version = "0.0.5")
 bazel_dep(name = "rules_cc", version = "0.0.1")
 bazel_dep(name = "bazel_skylib", version = "1.2.0")
-bazel_dep(name = "apple_support", version = "0.13.0")
+bazel_dep(
+    name = "apple_support",
+    repo_name = "build_bazel_apple_support",
+    version = "1.4.0"
+)
 
 # Load tinyjson without using the process wrapper
 raw_cargo = use_extension("//:extensions.bzl", "raw_cargo")
@@ -20,4 +24,22 @@ raw_cargo.crate(
 use_repo(
     raw_cargo,
     rules_rust_tinyjson = "raw_cargo_tinyjson_2_3_0",
+)
+
+# Set up a default toolchain, so we can use it to bootstrap cargo bazel.
+rust_toolchains = use_extension(":extensions.bzl", "toolchains")
+rust_toolchains.toolchain(edition = "2021")
+use_repo(
+    rust_toolchains,
+    # TODO: see if we can rename this to host_tools or something, to ensure it
+    # works on ather architectures.
+    # TODO: is there any way to extract only these tools?
+    "rust_linux_x86_64__x86_64-unknown-linux-gnu_tools",
+)
+
+cargo_bazel_bootstrap = use_extension(":extensions.bzl", "cargo_bazel_bootstrap")
+cargo_bazel_bootstrap.cargo_bazel_bootstrap()
+use_repo(
+    cargo_bazel_bootstrap,
+    "cargo_bazel_bootstrap"
 )

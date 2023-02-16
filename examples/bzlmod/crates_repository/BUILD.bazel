@@ -1,0 +1,12 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+# IDEs are unable to detect your deps by default.
+# Use https://bazelbuild.github.io/rules_rust/rust_analyzer.html to fix that.
+rust_binary(
+    name = "hello_log",
+    srcs = ["src/main.rs"],
+       deps =  [
+        "@crates//:env_logger",
+        "@crates//:log",
+    ],
+)

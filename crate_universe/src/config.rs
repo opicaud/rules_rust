@@ -23,6 +23,9 @@ pub enum VendorMode {
 
     /// Crates having only BUILD files with repository rules vendored into a workspace
     Remote,
+
+    /// Nothing is stored locally. Both build files and source code are fetched by repo rules.
+    BzlMod,
 }
 
 impl std::fmt::Display for VendorMode {
@@ -31,6 +34,7 @@ impl std::fmt::Display for VendorMode {
             match self {
                 VendorMode::Local => "local",
                 VendorMode::Remote => "remote",
+                VendorMode::BzlMod => "bzlmod",
             },
             f,
         )

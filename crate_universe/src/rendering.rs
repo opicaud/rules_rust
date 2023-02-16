@@ -40,6 +40,9 @@ impl Renderer {
                 crate::config::VendorMode::Remote => {
                     output.extend(self.render_vendor_support_files(context)?);
                 }
+                crate::config::VendorMode::BzlMod => {
+                    // output.extend(self.render_repo_rule_helpers(context)?);
+                }
             }
         }
 
@@ -104,6 +107,15 @@ impl Renderer {
         );
 
         Ok(map)
+    }
+
+    fn render_bzlmod_files(&self, context: &Context) -> Result<BTreeMap<PathBuf, String>> {
+        let build_files = self.render_build_files(context)?;
+        // for path in build_files.keys().into_iter() {
+        //
+        // }
+        // self.engine.render_alias_json()
+        Ok(build_files)
     }
 
     fn label_to_path(label: &Label) -> PathBuf {

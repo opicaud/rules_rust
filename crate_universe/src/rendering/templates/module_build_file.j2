@@ -2,6 +2,10 @@
 
 package(default_visibility = ["//visibility:public"])
 
+{%- set current_vendor_mode = vendor_mode | default(value="") %}
+{%- if current_vendor_mode == "bzlmod" %}
+exports_files(["defs.bzl"])
+{%- else %}
 exports_files(
     [
         "cargo-bazel.json",
@@ -19,6 +23,7 @@ filegroup(
         "*.bzl",
     ]),
 )
+{%- endif %}
 
 # Workspace Member Dependencies
 {%- for dep, rename in workspace_member_dependencies %}

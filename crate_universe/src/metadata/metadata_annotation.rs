@@ -1,6 +1,6 @@
 //! Collect and store information from Cargo metadata specific to Bazel's needs
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::convert::TryFrom;
 use std::path::PathBuf;
 
@@ -155,6 +155,14 @@ pub enum SourceAnnotation {
         patches: Option<BTreeSet<String>>,
     },
 }
+
+// #[derive(Debug, Deserialize, Serialize, Hash)]
+// pub struct CrateRepoRule {
+//     name: String,
+//     build_file_content: String,
+//     source_annotation: SourceAnnotation,
+//     extra_args: Vec<(String, String)>,
+// }
 
 /// Additional information related to [Cargo.lock](https://doc.rust-lang.org/cargo/guide/cargo-toml-vs-cargo-lock.html)
 /// data used for improved determinism.
