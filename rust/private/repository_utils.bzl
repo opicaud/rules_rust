@@ -1,6 +1,5 @@
 """Utility macros for use in rules_rust repository rules"""
 
-load("//rust/private:common.bzl", "DEFAULT_NIGHTLY_ISO_DATE")
 load("//rust:known_shas.bzl", "FILE_KEY_TO_SHA")
 load(
     "//rust/platform:triple_mappings.bzl",
@@ -9,6 +8,7 @@ load(
     "system_to_staticlib_ext",
     "system_to_stdlib_linkflags",
 )
+load("//rust/private:common.bzl", "DEFAULT_NIGHTLY_ISO_DATE")
 
 DEFAULT_TOOLCHAIN_NAME_PREFIX = "toolchain_for"
 DEFAULT_STATIC_RUST_URL_TEMPLATES = ["https://static.rust-lang.org/dist/{}.tar.gz"]
@@ -820,7 +820,6 @@ toolchain_repository_hub = repository_rule(
         "repositories. This exists to allow registering a set of toolchains in one go with the `:all` target."
     ),
     attrs = {
-        "toolchain_names": attr.string_list(mandatory = True),
         "exec_compatible_with": attr.string_list_dict(
             doc = "A list of constraints for the execution platform for this toolchain, keyed by toolchain name.",
             mandatory = True,
@@ -833,6 +832,7 @@ toolchain_repository_hub = repository_rule(
             doc = "The name of the toolchain implementation target, keyed by toolchain name.",
             mandatory = True,
         ),
+        "toolchain_names": attr.string_list(mandatory = True),
         "toolchain_types": attr.string_dict(
             doc = "The toolchain type of the toolchain to declare, keyed by toolchain name.",
             mandatory = True,
