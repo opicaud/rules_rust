@@ -249,7 +249,7 @@ def rust_register_toolchains(
                 rustfmt_repo_name,
             ))
 
-        for toolchain in get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
+        for toolchain in _get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
             toolchain_names.append(toolchain.name)
             toolchain_labels[toolchain.name] = "@{}//:{}".format(toolchain.name + "_tools", "rust_toolchain")
             exec_compatible_with_by_toolchain[toolchain.name] = triple_to_constraint_set(exec_triple)
@@ -806,7 +806,7 @@ rust_toolchain_set_repository = repository_rule(
     implementation = _rust_toolchain_set_repository_impl,
 )
 
-def get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
+def _get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
     toolchain_repos = []
 
     for target_triple in [exec_triple] + extra_target_triples:
@@ -904,7 +904,7 @@ def rust_repository_set(
         versions = [version]
 
     all_toolchain_names = []
-    for toolchain in get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
+    for toolchain in _get_toolchain_repositories(name, exec_triple, extra_target_triples, versions, iso_date):
         rust_toolchain_repository(
             name = toolchain.name,
             allocator_library = allocator_library,
