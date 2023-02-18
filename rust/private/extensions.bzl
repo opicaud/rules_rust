@@ -26,7 +26,7 @@ def _raw_cargo_impl(ctx):
                 build_file_content = _create_build_file_content(crate.name),
             )
 
-raw_cargo_crate = tag_class(attrs = {"name": attr.string(), "version": attr.string(), "sha256": attr.string()})
+raw_cargo_crate = tag_class(attrs = {"name": attr.string(), "sha256": attr.string(), "version": attr.string()})
 raw_cargo = module_extension(
     implementation = _raw_cargo_impl,
     tag_classes = {"crate": raw_cargo_crate},
