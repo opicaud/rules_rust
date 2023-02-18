@@ -12,6 +12,8 @@ load(
     "BUILD_for_rust_toolchain",
     "BUILD_for_rustfmt_toolchain",
     "BUILD_for_toolchain",
+    "DEFAULT_EXTRA_TARGET_TRIPLES",
+    "DEFAULT_NIGHTLY_VERSION",
     "DEFAULT_STATIC_RUST_URL_TEMPLATES",
     "check_version_valid",
     "includes_rust_analyzer_proc_macro_srv",
@@ -91,11 +93,9 @@ def rules_rust_dependencies():
         build_file = "@rules_rust//util/process_wrapper:BUILD.tinyjson.bazel",
     )
 
-_DEFAULT_NIGHTLY_VERSION = "nightly/{}".format(DEFAULT_NIGHTLY_ISO_DATE)
-
 _RUST_TOOLCHAIN_VERSIONS = [
     rust_common.default_version,
-    _DEFAULT_NIGHTLY_VERSION,
+    DEFAULT_NIGHTLY_VERSION,
 ]
 
 # buildifier: disable=unnamed-macro
@@ -105,10 +105,10 @@ def rust_register_toolchains(
         allocator_library = None,
         iso_date = None,
         register_toolchains = True,
-        rustfmt_version = _DEFAULT_NIGHTLY_VERSION,
+        rustfmt_version = DEFAULT_NIGHTLY_VERSION,
         rust_analyzer_version = None,
         sha256s = None,
-        extra_target_triples = ["wasm32-unknown-unknown", "wasm32-wasi"],
+        extra_target_triples = DEFAULT_EXTRA_TARGET_TRIPLES,
         urls = DEFAULT_STATIC_RUST_URL_TEMPLATES,
         version = None,
         versions = []):
