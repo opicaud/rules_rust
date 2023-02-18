@@ -1,5 +1,6 @@
 """Utility macros for use in rules_rust repository rules"""
 
+load("//rust/private:common.bzl", "DEFAULT_NIGHTLY_ISO_DATE")
 load("//rust:known_shas.bzl", "FILE_KEY_TO_SHA")
 load(
     "//rust/platform:triple_mappings.bzl",
@@ -11,6 +12,8 @@ load(
 
 DEFAULT_TOOLCHAIN_NAME_PREFIX = "toolchain_for"
 DEFAULT_STATIC_RUST_URL_TEMPLATES = ["https://static.rust-lang.org/dist/{}.tar.gz"]
+DEFAULT_NIGHTLY_VERSION = "nightly/{}".format(DEFAULT_NIGHTLY_ISO_DATE)
+DEFAULT_EXTRA_TARGET_TRIPLES = ["wasm32-unknown-unknown", "wasm32-wasi"]
 
 _build_file_for_compiler_template = """\
 filegroup(
