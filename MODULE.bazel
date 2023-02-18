@@ -9,7 +9,7 @@ bazel_dep(name = "bazel_skylib", version = "1.2.0")
 bazel_dep(name = "apple_support", version = "0.13.0")
 
 # Load tinyjson without using the process wrapper
-raw_cargo = use_extension("//:extensions.bzl", "raw_cargo")
+raw_cargo = use_extension("//rust/private:extensions.bzl", "raw_cargo")
 
 raw_cargo.crate(
     name = "tinyjson",
