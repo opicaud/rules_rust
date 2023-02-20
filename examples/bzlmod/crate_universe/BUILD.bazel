@@ -1,0 +1,15 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "hello_log",
+    srcs = ["src/main.rs"],
+    # At the moment, the only easy-to-use use case for bzlmod crate_universe is
+    # to have a dummy crate which contains all your dependencies for *all* your
+    # rust code, and then each rust target will declare what it depends on.
+    # This is the equivalent of having a cargo workspace, and declaring in this
+    # crates' cargo.toml "env_logger.workspace = true".
+    deps = [
+        "@crates//:env_logger",
+        "@crates//:log",
+    ],
+)
