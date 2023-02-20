@@ -27,3 +27,9 @@ use_repo(
     rust_host_tools = "rules_rust_rust_host_tools",
 )
 
+cargo_bazel_bootstrap = use_extension("//rust:extensions.bzl", "cargo_bazel_bootstrap")
+cargo_bazel_bootstrap.cargo_bazel_bootstrap()
+use_repo(
+    cargo_bazel_bootstrap,
+    "cargo_bazel_bootstrap"
+)
