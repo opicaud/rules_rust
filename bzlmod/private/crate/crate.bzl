@@ -7,7 +7,7 @@ load("//rust/platform:triple.bzl", "get_host_triple")
 load("//crate_universe/private:crates_vendor.bzl", "CRATES_VENDOR_ATTRS", "write_config_file", "write_splicing_manifest", _crates_vendor_repo_rule = "crates_vendor")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
-load("//bzlmod/private:symlink_repo.bzl", "symlink_repo")
+load("//bzlmod/private:generate_repo.bzl", "generate_repo")
 load("//bzlmod/private/cargo_bazel_bootstrap:cargo_bazel_bootstrap.bzl", "get_cargo_bazel_runner")
 load("//bzlmod/private/crate/tag_classes:annotation.bzl", "annotation_tags_to_json", annotation_tag = "annotation")
 load("//bzlmod/private/crate/tag_classes:from_cargo.bzl", from_cargo_tag = "from_cargo")
@@ -113,10 +113,10 @@ def _crate_impl(module_ctx):
             ])
 
             crates_dir = tag_path.get_child(repo_name)
-            symlink_repo(
+            generate_repo(
                 name = repo_name,
-                files = {
-                    "BUILD.bazel": str(crates_dir.get_child("BUILD.bazel")),
+                contents = {
+                    "BUILD.bazel": module_ctx.read(crates_dir.get_child("BUILD.bazel")),
                 },
             )
 
