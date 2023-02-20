@@ -15,6 +15,7 @@ def _workspace_member(version, sha256 = None):
         sha256 = sha256,
     ))
 
+# If you change this, also change //bzlmod/private/crate/tag_classes/spec.bzl
 def _spec(
         package = None,
         version = None,
@@ -66,6 +67,7 @@ def _assert_absolute(label):
             label_str,
         ))
 
+# If you change this, also change //bzlmod/private/crate/tag_classes/annotations.bzl
 def _annotation(
         version = "*",
         additive_build_file = None,

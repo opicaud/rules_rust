@@ -1,0 +1,37 @@
+module(
+    name = "crates_repository",
+    version = "1.0"
+)
+
+bazel_dep(name = "rules_rust", version = "0.17.0")
+
+
+local_path_override(module_name = "rules_rust", path = "../../..")
+
+rust_toolchains = use_extension("@rules_rust//rust:extensions.bzl", "toolchains")
+rust_toolchains.toolchain(edition = "2021")
+use_repo(
+    rust_toolchains,
+    # Rename it from <module_name>_rust_toolchains.
+    rust_toolchains = "crates_repository_rust_toolchains",
+)
+register_toolchains("@rust_toolchains//:all")
+
+crate = use_extension("@rules_rust//rust:extensions.bzl", "crate")
+crate.from_cargo(
+    manifests = ["//:Cargo.toml"],
+    cargo_lockfile = "//:Cargo.lock",
+)
+
+# Add annotations to crates like so:
+crate.annotation(
+    crate = "env_logger",
+    version = "*",
+    rustc_env = dict(additive_build_file_content = "")
+)
+
+use_repo(
+    crate,
+    # Rename it from <module_name>_crates to crates
+    crates = "crates_repository_crates",
+)
