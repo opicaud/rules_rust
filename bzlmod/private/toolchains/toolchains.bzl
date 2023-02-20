@@ -1,4 +1,5 @@
 load("//crate_universe:deps_bootstrap.bzl", _cargo_bazel_bootstrap_repo_rule = "cargo_bazel_bootstrap")
+load("//rust/platform:triple.bzl", "get_host_triple")
 load("//rust/private:common.bzl", "rust_common")
 load(
     "//rust/private:repository_utils.bzl",
@@ -33,8 +34,25 @@ def generate_uid(toolchain):
     return hash("".join([str(hash(i)) for i in unique_config]))
 
 def _toolchains_impl(module_ctx):
+    host_triple = get_host_triple(module_ctx)
+
     toolchains = {}
     for mod in module_ctx.modules:
+        for toolchain in mod.tags.host_tools:
+            rust_toolchain_tools_repository(
+                name = "%s_rust_host_tools" % mod.name,
+                exec_triple = host_triple.str,
+                target_triple = host_triple.str,
+                allocator_library = toolchain.allocator_library,
+                version = toolchain.version,
+                rustfmt_version = toolchain.rustfmt_version,
+                edition = toolchain.edition,
+                sha256s = toolchain.sha256s,
+                urls = toolchain.urls,
+                dev_components = False,
+                auth = None,
+            )
+
         for toolchain in mod.tags.toolchain:
             repo_name = "%s_rust_toolchains" % mod.name
             if toolchain.suffix:
@@ -59,29 +77,40 @@ def _toolchains_impl(module_ctx):
             version = toolchain.versions,
         )
 
+_COMMON_TOOLCHAIN_ATTRS = dict(
+    allocator_library = attr.string(),
+    dev_components = attr.bool(default = False),
+    edition = attr.string(),
+    extra_target_triples = attr.string_list(default = DEFAULT_EXTRA_TARGET_TRIPLES),
+    rust_analyzer_version = attr.string(),
+    rustfmt_version = attr.string(default = DEFAULT_NIGHTLY_VERSION),
+    sha256s = attr.string_dict(),
+    urls = attr.string_list(default = DEFAULT_STATIC_RUST_URL_TEMPLATES),
+)
+
 toolchains_toolchain = tag_class(
     doc = "Generates a repo '<module_name>_rust_toolchain",
     attrs = dict(
+        versions = attr.string_list(default = []),
         suffix = attr.string(
             doc = "If provided, instead of generating <module_name>_rust_toolchain, " +
                   "generates <module_name>_rust_toolchain_<suffix>.\n" +
                   "This is required to generate multiple toolchains in the same module.",
         ),
-        allocator_library = attr.string(),
-        dev_components = attr.bool(default = False),
-        edition = attr.string(),
-        extra_target_triples = attr.string_list(default = DEFAULT_EXTRA_TARGET_TRIPLES),
-        rust_analyzer_version = attr.string(),
-        rustfmt_version = attr.string(default = DEFAULT_NIGHTLY_VERSION),
-        sha256s = attr.string_dict(),
-        urls = attr.string_list(default = DEFAULT_STATIC_RUST_URL_TEMPLATES),
-        versions = attr.string_list(default = []),
+        **_COMMON_TOOLCHAIN_ATTRS
     ),
 )
-
+host_tools = tag_class(
+    doc = "Generates a set of host tools suitable for bootstrapping cargo.",
+    attrs = dict(
+        version = attr.string(default = rust_common.default_version),
+        **_COMMON_TOOLCHAIN_ATTRS
+    ),
+)
 toolchains = module_extension(
     implementation = _toolchains_impl,
     tag_classes = dict(
         toolchain = toolchains_toolchain,
+        host_tools = host_tools,
     ),
 )
