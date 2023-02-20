@@ -1,0 +1,34 @@
+module(
+    name = "crates_repository",
+    version = "1.0",
+)
+
+bazel_dep(name = "rules_rust", version = "0.20.0")
+local_path_override(
+    module_name = "rules_rust",
+    path = "../../..",
+)
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(edition = "2021")
+use_repo(
+    rust,
+    "rust_toolchains",
+)
+
+register_toolchains("@rust_toolchains//:all")
+
+# Use a toml file to generate your dependencies like so:
+crate = use_extension("@rules_rust//rust:extensions.bzl", "crate")
+crate.from_cargo(
+    # This is optional, but if you need crate.annotation, then this is the
+    # bzlmod equivalent.
+    annotation_files = ["//:annotations.json"],
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = ["//:Cargo.toml"],
+)
+use_repo(
+    crate,
+    # Rename it from <module_name>_crates to crates
+    crates = "crates_repository_crates",
+)
