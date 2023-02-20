@@ -6,7 +6,7 @@ load("//crate_universe/private:srcs.bzl", "CARGO_BAZEL_SRCS")
 # buildifier: disable=bzl-visibility
 load("//rust/private:common.bzl", "rust_common")
 
-def cargo_bazel_bootstrap(name = "cargo_bazel_bootstrap", rust_version = rust_common.default_version):
+def cargo_bazel_bootstrap(name = "cargo_bazel_bootstrap", rust_version = rust_common.default_version, **kwargs):
     """An optional repository which bootstraps `cargo-bazel` for use with `crates_repository`
 
     Args:
@@ -22,4 +22,5 @@ def cargo_bazel_bootstrap(name = "cargo_bazel_bootstrap", rust_version = rust_co
         version = rust_version,
         # The increased timeout helps avoid flakes in CI
         timeout = 900,
+        **kwargs,
     )

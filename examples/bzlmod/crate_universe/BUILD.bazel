@@ -1,0 +1,14 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "hello_log",
+    srcs = ["src/main.rs"],
+    # At the moment, defs.bzl isn't generated, so we have no aliases,
+    # all_crate_deps, etc.
+    # See todo in //bzlmod/private/crate/crate.bzl for details.
+    # So for now users need to explicitly specify which crates they depend on.
+    deps = [
+        "@crates//:env_logger",
+        "@crates//:log",
+    ]
+)
