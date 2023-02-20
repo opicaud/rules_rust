@@ -18,3 +18,12 @@ use_repo(
     non_bzlmod_deps,
     "rules_rust_tinyjson"
 )
+
+# Set up a default toolchain, so we can use it to bootstrap cargo bazel.
+toolchains = use_extension("//rust:extensions.bzl", "toolchains")
+toolchains.host_tools()
+use_repo(
+    toolchains,
+    rust_host_tools = "rules_rust_rust_host_tools",
+)
+
