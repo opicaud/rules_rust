@@ -44,6 +44,15 @@ DEFAULT_TOOLCHAIN_TRIPLES = {
     "x86_64-unknown-linux-gnu": "rust_linux_x86_64",
 }
 
+TINYJSON_KWARGS = dict(
+    name = "rules_rust_tinyjson",
+    sha256 = "1a8304da9f9370f6a6f9020b7903b044aa9ce3470f300a1fba5bc77c78145a16",
+    url = "https://crates.io/api/v1/crates/tinyjson/2.3.0/download",
+    strip_prefix = "tinyjson-2.3.0",
+    type = "tar.gz",
+    build_file = "@rules_rust//util/process_wrapper:BUILD.tinyjson.bazel",
+)
+
 def rules_rust_dependencies():
     """Dependencies used in the implementation of `rules_rust`."""
 
@@ -85,12 +94,7 @@ def rules_rust_dependencies():
     # process_wrapper needs a low-dependency way to process json.
     maybe(
         http_archive,
-        name = "rules_rust_tinyjson",
-        sha256 = "1a8304da9f9370f6a6f9020b7903b044aa9ce3470f300a1fba5bc77c78145a16",
-        url = "https://crates.io/api/v1/crates/tinyjson/2.3.0/download",
-        strip_prefix = "tinyjson-2.3.0",
-        type = "tar.gz",
-        build_file = "@rules_rust//util/process_wrapper:BUILD.tinyjson.bazel",
+        **TINYJSON_KWARGS
     )
 
 _RUST_TOOLCHAIN_VERSIONS = [
@@ -111,7 +115,9 @@ def rust_register_toolchains(
         extra_target_triples = DEFAULT_EXTRA_TARGET_TRIPLES,
         urls = DEFAULT_STATIC_RUST_URL_TEMPLATES,
         version = None,
-        versions = []):
+        versions = [],
+        hub_repos = ["rust_toolchains"],
+        repo_namespace = None):
     """Emits a default set of toolchains for Linux, MacOS, and Freebsd
 
     Skip this macro and call the `rust_repository_set` macros directly if you need a compiler for \
@@ -144,6 +150,8 @@ def rust_register_toolchains(
         version (str, optional): **Deprecated**: Use `versions` instead.
         versions (list, optional): A list of toolchain versions to download. This paramter only accepts one versions
             per channel. E.g. `["1.65.0", "nightly/2022-11-02", "beta/2020-12-30"]`.
+        hub_repos (list, optional): A list of hub repos to generate. For use with bzlmod.
+        repo_namespace (str, optional): If provided, all generated repos will be prefixed with repo_namespace.
     """
     if version:
         # buildifier: disable=print
@@ -177,6 +185,8 @@ def rust_register_toolchains(
         rust_analyzer_version = select_rust_version(versions)
 
     rust_analyzer_repo_name = "rust_analyzer_{}".format(rust_analyzer_version.replace("/", "-"))
+    if repo_namespace:
+        rust_analyzer_repo_name = "%s__%s" % (repo_namespace, rust_analyzer_repo_name)
     rust_analyzer_iso_date = None
     if rust_analyzer_version.startswith(("beta", "nightly")):
         rust_analyzer_version, _, rust_analyzer_iso_date = rustfmt_version.partition("/")
@@ -215,6 +225,8 @@ def rust_register_toolchains(
         rustfmt_version_or_channel, _, rustfmt_iso_date = rustfmt_version.partition("/")
 
     for exec_triple, name in DEFAULT_TOOLCHAIN_TRIPLES.items():
+        if repo_namespace:
+            name = "%s__%s" % (repo_namespace, name)
         maybe(
             rust_repository_set,
             name = name,
@@ -256,14 +268,18 @@ def rust_register_toolchains(
             target_compatible_with_by_toolchain[toolchain.name] = triple_to_constraint_set(toolchain.target_triple)
             toolchain_types[toolchain.name] = "@rules_rust//rust:toolchain"
 
-    toolchain_repository_hub(
-        name = "rust_toolchains",
-        toolchain_names = toolchain_names,
-        toolchain_labels = toolchain_labels,
-        toolchain_types = toolchain_types,
-        exec_compatible_with = exec_compatible_with_by_toolchain,
-        target_compatible_with = target_compatible_with_by_toolchain,
-    )
+    # See github.com/bazelbuild/bazel/issues/17493
+    # Not all hub repos get the same "view" into spoke repos, but ones that
+    # share the same config do.
+    for repo_name in hub_repos:
+        toolchain_repository_hub(
+            name = repo_name,
+            toolchain_names = toolchain_names,
+            toolchain_labels = toolchain_labels,
+            toolchain_types = toolchain_types,
+            exec_compatible_with = exec_compatible_with_by_toolchain,
+            target_compatible_with = target_compatible_with_by_toolchain,
+        )
 
 # buildifier: disable=unnamed-macro
 def rust_repositories(**kwargs):

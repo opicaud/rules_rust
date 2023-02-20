@@ -13,7 +13,8 @@ rust_toolchains = use_extension("@rules_rust//rust:extensions.bzl", "toolchains"
 rust_toolchains.toolchain(edition = "2021")
 use_repo(
     rust_toolchains,
-    "rust_toolchains",
+    # Rename it from <module_name>_rust_toolchains.
+    rust_toolchains = "hello_world_rust_toolchains",
 )
 
 register_toolchains("@rust_toolchains//:all")
