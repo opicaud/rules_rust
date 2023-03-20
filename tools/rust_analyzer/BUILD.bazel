@@ -7,7 +7,8 @@ rust_binary(
     srcs = ["main.rs"],
     edition = "2018",
     rustc_env = {
-        "ASPECT_REPOSITORY": aspect_repository(),
+        # This doesn't work well with bzlmod since we're looking for the user-facing repository name, but we get the one before repo mapping (eg. rules_rust~0.19.0).
+        "ASPECT_REPOSITORY": "@rules_rust",
     },
     visibility = ["//visibility:public"],
     deps = [

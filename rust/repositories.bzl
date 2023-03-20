@@ -193,7 +193,8 @@ def rust_register_toolchains(
     )
 
     toolchain_names.append(rust_analyzer_repo_name)
-    toolchain_labels[rust_analyzer_repo_name] = "@{}_srcs//:rust_analyzer_toolchain".format(
+    # TODO: no idea what the hell is happening here.
+    toolchain_labels[rust_analyzer_repo_name] = "@{}_tools//:rust_analyzer_toolchain".format(
         rust_analyzer_repo_name,
     )
     exec_compatible_with_by_toolchain[rust_analyzer_repo_name] = []
