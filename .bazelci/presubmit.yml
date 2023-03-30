@@ -344,10 +344,16 @@ tasks:
       - "//..."
     build_flags: *aspects_flags
     soft_fail: yes
-  ubuntu2004_examples_bzlmod:
-    name: Bzlmod Examples
+  ubuntu2004_examples_bzlmod_hello_world:
+    name: Bzlmod hello world example
     platform: ubuntu2004
     working_directory: examples/bzlmod/hello_world
+    build_targets:
+      - "//..."
+  ubuntu2004_examples_bzlmod_crate_universe:
+    name: Bzlmod crate universe examples
+    platform: ubuntu2004
+    working_directory: examples/bzlmod/crate_universe
     build_targets:
       - "//..."
   rbe_ubuntu1604_examples:
