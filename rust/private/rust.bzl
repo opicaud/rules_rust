@@ -348,6 +348,12 @@ def _rust_binary_impl(ctx):
     _assert_correct_dep_mapping(ctx)
 
     output = ctx.actions.declare_file(ctx.label.name + toolchain.binary_ext)
+    rust_build_output = None
+    if ctx.attr._process_wrapper and ctx.attr._output_diagnostics:
+        rust_build_output = ctx.actions.declare_file(
+            _rustc_output_name(ctx.label.name),
+            sibling = output,
+        )
 
     deps = transform_deps(ctx.attr.deps)
     proc_macro_deps = transform_deps(ctx.attr.proc_macro_deps + get_import_macro_deps(ctx))
@@ -369,6 +375,7 @@ def _rust_binary_impl(ctx):
             proc_macro_deps = depset(proc_macro_deps),
             aliases = ctx.attr.aliases,
             output = output,
+            rust_lib_rustc_output = rust_build_output,
             edition = get_edition(ctx.attr, toolchain, ctx.label),
             rustc_env = ctx.attr.rustc_env,
             rustc_env_files = ctx.files.rustc_env_files,
@@ -411,6 +418,12 @@ def _rust_test_impl(ctx):
                 toolchain.binary_ext,
             ),
         )
+        rust_build_output = None
+        if ctx.attr._process_wrapper and ctx.attr._output_diagnostics:
+            rust_build_output = ctx.actions.declare_file(
+                _rustc_output_name(ctx.label.name),
+                sibling = output,
+            )
 
         # Optionally join compile data
         if crate.compile_data:
@@ -435,6 +448,7 @@ def _rust_test_impl(ctx):
             proc_macro_deps = depset(proc_macro_deps, transitive = [crate.proc_macro_deps]),
             aliases = ctx.attr.aliases,
             output = output,
+            rust_lib_rustc_output = rust_build_output,
             edition = crate.edition,
             rustc_env = rustc_env,
             rustc_env_files = rustc_env_files,
@@ -457,6 +471,12 @@ def _rust_test_impl(ctx):
                 toolchain.binary_ext,
             ),
         )
+        rust_build_output = None
+        if ctx.attr._process_wrapper and ctx.attr._output_diagnostics:
+            rust_build_output = ctx.actions.declare_file(
+                _rustc_output_name(ctx.label.name),
+                sibling = output,
+            )
 
         # Target is a standalone crate. Build the test binary as its own crate.
         crate_info = rust_common.create_crate_info(
@@ -468,6 +488,7 @@ def _rust_test_impl(ctx):
             proc_macro_deps = depset(proc_macro_deps),
             aliases = ctx.attr.aliases,
             output = output,
+            rust_lib_rustc_output = rust_build_output,
             edition = get_edition(ctx.attr, toolchain, ctx.label),
             rustc_env = ctx.attr.rustc_env,
             rustc_env_files = ctx.files.rustc_env_files,
