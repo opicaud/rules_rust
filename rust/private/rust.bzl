@@ -16,7 +16,7 @@
 
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("//rust/private:common.bzl", "rust_common")
-load("//rust/private:rustc.bzl", "rustc_compile_action")
+load("//rust/private:rustc.bzl", "OutputDiagnosticsInfo", "rustc_compile_action")
 load(
     "//rust/private:utils.bzl",
     "can_build_metadata",
@@ -64,6 +64,32 @@ def _assert_correct_dep_mapping(ctx):
                     type,
                 ),
             )
+
+def _generate_output_diagnostics(ctx, sibling, require_process_wrapper = True):
+    """Generates a .rustc-output file if it's required.
+
+    Args:
+        ctx: (ctx): The current rule's context object
+        sibling: (File): The file to generate the diagnostics for.
+        require_process_wrapper: (bool): Whether to require the process wrapper
+          in order to generate the .rustc-output file.
+    Returns:
+        Optional[File] The .rustc-object file, if generated.
+    """
+
+    # Since this feature requires error_format=json, we usually need
+    # process_wrapper, since it can write the json here, then convert it to the
+    # regular error format so the user can see the error properly.
+    if require_process_wrapper and not ctx.attr._process_wrapper:
+        return None
+    provider = ctx.attr._output_diagnostics[OutputDiagnosticsInfo]
+    if not provider.output_diagnostics:
+        return None
+
+    return ctx.actions.declare_file(
+        sibling.basename + ".rustc-output",
+        sibling = sibling,
+    )
 
 def _determine_lib_name(name, crate_type, toolchain, lib_hash = None):
     """See https://github.com/bazelbuild/rules_rust/issues/405
@@ -279,11 +305,13 @@ def _rust_library_common(ctx, crate_type):
     rust_lib = ctx.actions.declare_file(rust_lib_name)
 
     rust_metadata = None
+    rustc_rmeta_output = None
     if can_build_metadata(toolchain, ctx, crate_type) and not ctx.attr.disable_pipelining:
         rust_metadata = ctx.actions.declare_file(
             paths.replace_extension(rust_lib_name, ".rmeta"),
             sibling = rust_lib,
         )
+        rustc_rmeta_output = _generate_output_diagnostics(ctx, rust_metadata)
 
     deps = transform_deps(ctx.attr.deps)
     proc_macro_deps = transform_deps(ctx.attr.proc_macro_deps + get_import_macro_deps(ctx))
@@ -301,7 +329,9 @@ def _rust_library_common(ctx, crate_type):
             proc_macro_deps = depset(proc_macro_deps),
             aliases = ctx.attr.aliases,
             output = rust_lib,
+            rustc_output = _generate_output_diagnostics(ctx, rust_lib),
             metadata = rust_metadata,
+            rustc_rmeta_output = rustc_rmeta_output,
             edition = get_edition(ctx.attr, toolchain, ctx.label),
             rustc_env = ctx.attr.rustc_env,
             rustc_env_files = ctx.files.rustc_env_files,
@@ -348,6 +378,7 @@ def _rust_binary_impl(ctx):
             proc_macro_deps = depset(proc_macro_deps),
             aliases = ctx.attr.aliases,
             output = output,
+            rustc_output = _generate_output_diagnostics(ctx, output),
             edition = get_edition(ctx.attr, toolchain, ctx.label),
             rustc_env = ctx.attr.rustc_env,
             rustc_env_files = ctx.files.rustc_env_files,
@@ -414,6 +445,7 @@ def _rust_test_impl(ctx):
             proc_macro_deps = depset(proc_macro_deps, transitive = [crate.proc_macro_deps]),
             aliases = ctx.attr.aliases,
             output = output,
+            rustc_output = _generate_output_diagnostics(ctx, output),
             edition = crate.edition,
             rustc_env = rustc_env,
             rustc_env_files = rustc_env_files,
@@ -447,6 +479,7 @@ def _rust_test_impl(ctx):
             proc_macro_deps = depset(proc_macro_deps),
             aliases = ctx.attr.aliases,
             output = output,
+            rustc_output = _generate_output_diagnostics(ctx, output),
             edition = get_edition(ctx.attr, toolchain, ctx.label),
             rustc_env = ctx.attr.rustc_env,
             rustc_env_files = ctx.files.rustc_env_files,
@@ -681,6 +714,9 @@ _common_attrs = {
     ),
     "_is_proc_macro_dep_enabled": attr.label(
         default = Label("//:is_proc_macro_dep_enabled"),
+    ),
+    "_output_diagnostics": attr.label(
+        default = Label("//:output_diagnostics"),
     ),
     "_per_crate_rustc_flag": attr.label(
         default = Label("//:experimental_per_crate_rustc_flag"),

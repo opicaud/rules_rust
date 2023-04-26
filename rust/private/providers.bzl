@@ -23,7 +23,7 @@ CrateInfo = provider(
         "deps": "depset[DepVariantInfo]: This crate's (rust or cc) dependencies' providers.",
         "edition": "str: The edition of this crate.",
         "is_test": "bool: If the crate is being compiled in a test context",
-        "metadata": "File: The rmeta file produced for this crate. It is optional.",
+        "metadata": "File: The output from rustc from producing the output file. It is optional.",
         "name": "str: The name of this crate.",
         "output": "File: The output File that will be produced, depends on crate type.",
         "owner": "Label: The label of the target that produced this CrateInfo",
@@ -31,6 +31,8 @@ CrateInfo = provider(
         "root": "File: The source File entrypoint to this crate, eg. lib.rs",
         "rustc_env": "Dict[String, String]: Additional `\"key\": \"value\"` environment variables to set for rustc.",
         "rustc_env_files": "[File]: Files containing additional environment variables to set for rustc.",
+        "rustc_output": "File: The output from rustc from producing the output file. It is optional.",
+        "rustc_rmeta_output": "File: The rmeta file produced for this crate. It is optional.",
         "srcs": "depset[File]: All source Files that are part of the crate.",
         "type": (
             "str: The type of this crate " +

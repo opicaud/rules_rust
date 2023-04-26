@@ -12,6 +12,7 @@ load(
     "is_proc_macro_dep",
     "is_proc_macro_dep_enabled",
     "no_std",
+    "output_diagnostics",
     "per_crate_rustc_flag",
 )
 
@@ -29,6 +30,13 @@ bzl_library(
 error_format(
     name = "error_format",
     build_setting_default = "human",
+    visibility = ["//visibility:public"],
+)
+
+# This setting may be changed from the command line to generate rustc diagnostics.
+output_diagnostics(
+    name = "output_diagnostics",
+    build_setting_default = False,
     visibility = ["//visibility:public"],
 )
 
