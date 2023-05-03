@@ -55,8 +55,8 @@ ErrorFormatInfo = provider(
 )
 
 OutputDiagnosticsInfo = provider(
-    doc = "Save json diagnostics form rustc",
-    fields = {"output_diagnostics": "(bool)"},
+    doc = "Save json diagnostics from rustc (output of rustc --error-format=json)",
+    fields = {"output_diagnostics": "(bool): Whether or not to output diagnostics."},
 )
 
 ExtraRustcFlagsInfo = provider(
