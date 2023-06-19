@@ -25,3 +25,6 @@ use_repo(
 rust = use_extension("//rust:extensions.bzl", "rust")
 rust.host_tools(edition = "2021")
 use_repo(rust, "rust_host_tools")
+
+cargo_bazel_bootstrap = use_extension("//crate_universe/private/module_extensions:cargo_bazel_bootstrap.bzl", "cargo_bazel_bootstrap")
+use_repo(cargo_bazel_bootstrap, "cargo_bazel_bootstrap")
