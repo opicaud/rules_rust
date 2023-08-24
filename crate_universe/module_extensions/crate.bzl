@@ -196,7 +196,8 @@ def _crate_impl(module_ctx):
                         remote = repo["remote"],
                         build_file_content = build_file_content,
                         strip_prefix = repo.get("strip_prefix", None),
-                        **repo["commitish"]
+                        commit = repo["commitish"].get("Rev", None),
+                        #**repo["commitish"]
                     )
                 else:
                     fail("Invalid repo: expected Http or Git to exist for crate %s-%s, got %s" % (name, version, repo))
