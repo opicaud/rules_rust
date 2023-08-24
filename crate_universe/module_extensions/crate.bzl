@@ -152,6 +152,7 @@ def _crate_impl(module_ctx):
                 name = repo_name,
                 contents = {
                     "BUILD.bazel": module_ctx.read(crates_dir.get_child("BUILD.bazel")),
+                    "defs.bzl": module_ctx.read(crates_dir.get_child("defs.bzl")),
                 },
             )
 

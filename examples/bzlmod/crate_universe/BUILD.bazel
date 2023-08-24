@@ -1,4 +1,5 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@crates//:defs.bzl", "all_crate_deps")
 
 rust_binary(
     name = "hello_log",
@@ -8,8 +9,5 @@ rust_binary(
     # rust code, and then each rust target will declare what it depends on.
     # This is the equivalent of having a cargo workspace, and declaring in this
     # crates' cargo.toml "env_logger.workspace = true".
-    deps = [
-        "@crates//:env_logger",
-        "@crates//:log",
-    ],
+    deps = all_crate_deps() ,
 )

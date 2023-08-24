@@ -193,6 +193,7 @@ def write_config_file(
         file: The cargo-bazel-config.json written.
     """
     default_render_config = json.decode(render_config())
+
     if rendering_config == None:
         rendering_config = default_render_config
 
@@ -204,7 +205,6 @@ def write_config_file(
     else:
         build_file_base_template = "@{}//{}:BUILD.{{name}}-{{version}}.bazel"
         crate_label_template = rendering_config["crate_label_template"]
-
     updates = {
         "build_file_template": build_file_base_template.format(
             repo_name,

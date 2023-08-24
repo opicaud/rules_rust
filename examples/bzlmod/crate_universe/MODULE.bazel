@@ -32,3 +32,9 @@ use_repo(
     # Rename it from <module_name>_crates to crates
     crates = "crates_repository_crates",
 )
+
+use_repo(
+    crate,
+    "crates_repository_crates__env_logger-0.9.3",
+    "crates_repository_crates__log-0.4.17"
+)
