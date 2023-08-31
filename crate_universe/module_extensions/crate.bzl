@@ -72,9 +72,16 @@ def _crate_impl(module_ctx):
                 module_ctx.file(path, content = data, executable = False)
                 return path
 
-            rendering_config = json.decode(render_config(
-                regen_command = "Run 'cargo update [--workspace]'",
-            ))
+            if cfg.repo_alias != "":
+                rendering_config = json.decode(render_config(
+                    regen_command = "Run 'cargo update [--workspace]'",
+                    crate_mod_repository_alias = "@"+cfg.repo_alias+"//:",
+                ))
+            else:
+                rendering_config = json.decode(render_config(
+                    regen_command = "Run 'cargo update [--workspace]'",
+                ))
+
             config_file = write_config_file(
                 module_ctx,
                 mode = "remote",
@@ -210,6 +217,7 @@ _from_cargo = tag_class(
             doc = "If provided, instead generates a repo <mod_name>_crates_<suffix>. " +
                   "This can help avoid conflicts if you declare multiple from_cargo in a single module.",
         ),
+        repo_alias = attr.string(doc = "", default=""),
         cargo_lockfile = CRATES_VENDOR_ATTRS["cargo_lockfile"],
         manifests = CRATES_VENDOR_ATTRS["manifests"],
         cargo_config = CRATES_VENDOR_ATTRS["cargo_config"],

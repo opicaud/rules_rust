@@ -61,6 +61,7 @@ impl Context {
                     &annotations.features,
                     annotations.config.generate_binaries,
                     annotations.config.generate_build_scripts,
+                    annotations.config.rendering.crate_mod_repository_alias.clone(),
                 );
                 let id = CrateId::new(context.name.clone(), context.version.clone());
                 (id, context)

@@ -155,6 +155,8 @@ pub struct CommonAttributes {
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
+
+    pub crate_mod_repository_alias: String,
 }
 
 impl Default for CommonAttributes {
@@ -179,6 +181,7 @@ impl Default for CommonAttributes {
             rustc_flags: Default::default(),
             version: Default::default(),
             tags: Default::default(),
+            crate_mod_repository_alias: Default::default(),
         }
     }
 }
@@ -303,6 +306,7 @@ impl CrateContext {
         features: &BTreeMap<CrateId, SelectList<String>>,
         include_binaries: bool,
         include_build_scripts: bool,
+        crate_mod_repository_alias: String
     ) -> Self {
         let package: &Package = &packages[&annotation.node.id];
         let current_crate_id = CrateId::new(package.name.clone(), package.version.to_string());
@@ -345,9 +349,9 @@ impl CrateContext {
             proc_macro_deps,
             proc_macro_deps_dev,
             version: package.version.to_string(),
+            crate_mod_repository_alias,
             ..Default::default()
         };
-
         // Locate extra settings for the current package.
         let package_extra = extras
             .iter()

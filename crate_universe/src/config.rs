@@ -65,6 +65,11 @@ pub struct RenderConfig {
     #[serde(default = "default_crate_repository_template")]
     pub crate_repository_template: String,
 
+    /// The pattern used for a crate's repository name.
+    /// Eg. `{mod_repository}`
+    #[serde(default = "default_crate_mod_repository_alias")]
+    pub crate_mod_repository_alias: String,
+
     /// The default of the `package_name` parameter to use for the module macros like `all_crate_deps`.
     /// In general, this should be be unset to allow the macros to do auto-detection in the analysis phase.
     pub default_package_name: Option<String>,
@@ -95,6 +100,10 @@ fn default_crate_label_template() -> String {
 
 fn default_crate_repository_template() -> String {
     "{repository}__{name}-{version}".to_owned()
+}
+
+fn default_crate_mod_repository_alias() -> String {
+    "".to_owned()
 }
 
 fn default_platforms_template() -> String {

@@ -26,6 +26,7 @@ crate.from_cargo(
     annotation_files = ["//:annotations.json"],
     cargo_lockfile = "//:Cargo.lock",
     manifests = ["//:Cargo.toml"],
+    repo_alias = "crates"
 )
 use_repo(
     crate,

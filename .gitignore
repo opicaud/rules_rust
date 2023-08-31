@@ -31,3 +31,4 @@ bazelci.py
 
 # rust-analyzer
 rust-project.json
+.idea
